@@ -1,6 +1,19 @@
 import os
+import gnureadline
+import glob
+
 from spectrum import Spectrum
 from errors.spectrum_error import SpectrumError
+
+
+# this is so that raw_input can autocomplete with
+def complete(text, state):
+    return (glob.glob(text+'*')+[None])[state]
+
+gnureadline.set_completer_delims(' \t\n;')
+gnureadline.parse_and_bind("tab: complete")
+gnureadline.set_completer(complete)
+
 
 def loadTestImage():
     image_name = "test/test_image.fits"

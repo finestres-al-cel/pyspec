@@ -1,6 +1,17 @@
 import os
+import gnureadline
+import glob
+
 from spectrum import Spectrum
 from errors.spectrum_error import SpectrumError
+
+# this is so that raw_input can autocomplete with
+def complete(text, state):
+    return (glob.glob(text+'*')+[None])[state]
+
+gnureadline.set_completer_delims(' \t\n;')
+gnureadline.parse_and_bind("tab: complete")
+gnureadline.set_completer(complete)
 
 def loadImage():
     image_name = raw_input("Enter image/spectrum name --> ")
@@ -50,7 +61,6 @@ if __name__ == "__main__":
 
         # load spectrum image
         elif option == 1:
-            # TODO: enable autofill
             message, spec = loadImage()
 
         # extract spectrum
