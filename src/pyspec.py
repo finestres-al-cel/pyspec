@@ -5,7 +5,7 @@ import glob
 from spectrum import Spectrum
 from errors.spectrum_error import SpectrumError
 
-# this is so that raw_input can autocomplete with
+# this is so that raw_input can autocomplete using the tab
 def complete(text, state):
     return (glob.glob(text+'*')+[None])[state]
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         print "#   2: Extract spectrum           #"
         print "#   3: Plot raw spectrum          #"
         print "#   4: Set calibration            #"
-        print "#   5: Calibrate                  #"
+        print "#   5: Load calibration           #"
         print "#   6: Plot calibrated spectrum   #"
         print "#                                 #"
         print "#   0: End                        #"
@@ -72,15 +72,24 @@ if __name__ == "__main__":
 
         # plot raw spectrum
         elif option == 3:
-            mesage = spec.plotRawSpectrum()
+            try:
+                mesage = spec.plotRawSpectrum()
+            except (AttributeError, NameError):
+                message = "Extract spectrum first"
                 
         # set calibration
         elif option == 4:
-            message = "not implemented"
+            try:
+                message = spec.setCalibration()
+            except (AttributeError, NameError):
+                message = "Extract spectrum first"
         
         # calibrate
         elif option == 5:
-            message = "not implemented"
+            try:
+                message = spec.loadCalibration()
+            except (AttributeError, NameError):
+                message = "Extract spectrum first"
 
         # plot calibrated spectrum
         elif option == 6:

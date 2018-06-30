@@ -20,6 +20,8 @@ __version__astropy = '1.3'
 __version__matplotlib = '2.0.0'
 __version__scipy = '0.18.1'
 
+import gnureadline
+import glob
 import astropy.io.fits as fits
 from enum import Enum
 import matplotlib.pyplot as plt
@@ -27,16 +29,30 @@ import matplotlib.gridspec as gridspec
 from matplotlib.backend_bases import MouseEvent, KeyEvent
 import numpy as np
 from scipy.ndimage import rotate, shift
+import pickle
 
+from errors.spectrum_error import SpectrumError
 from errors.spectrum_format_error import SpectrumFormatError
 from errors.spectrum_name_error import SpectrumNameError
 from errors.spectrum_type_error import SpectrumTypeError
 from errors.spectrum_file_error import SpectrumFileError
+from errors.spectrum_calibration_error import SpectrumCalibrationError
+
+# this is so that raw_input can autocomplete using the tab
+def complete(text, state):
+    return (glob.glob(text+'*')+[None])[state]
+
+gnureadline.set_completer_delims(' \t\n;')
+gnureadline.parse_and_bind("tab: complete")
+gnureadline.set_completer(complete)
+
 
 # figure settings
 FIGSIZE_SQUARE = (7, 7)
 FIGSIZE_HORIZONTAL = (14, 7)
 FONTSIZE = 24
+LABELSIZE = 20
+PAD = 8
 CMAP = plt.cm.get_cmap('Greys_r')
 
 # image formats accepted
@@ -50,7 +66,10 @@ class SelectLine(Enum):
     TOP = 1
     BOTTOM = 2
     NONE = 3
-
+class CalibrationAction(Enum):
+    ADD = 1
+    REMOVE = 2
+    NONE = 3
 
 class Spectrum(object):
     """
@@ -64,15 +83,21 @@ class Spectrum(object):
         extract                 : Extract the spectrum
         plotRawSpectrum         : Plot the uncalibrated spectrum
         plotCalibratedSpectrum  : Plot the calibrated spectrum
+        setCalibration          : Set the calibration peaks
+        setExtractedSpectrum    : Set the extracted spectrum
         
         PRIVATE METHODS (should not be accessed outside the class):
-        __addLine               : Add a horizontal line to the raw image plot to signal the extraction 
-                                  area
-        __currentStatus         : Print text describing the current status
-        __extract               : Extract the spectrum in the selected region
-        __rotateImage           : Rotate the image
-        __saveSpectrum        : Save the extracted spectrum
-        __selectEvent           : React to a key event calling the appropiate function
+        __addLine                 : Add a horizontal line to the raw image plot to signal the
+                                    extraction area
+        __calibrate               : Compute the wavelength solution
+        __calibrationPeak         : Add or remove a peak to the be used in the calibration
+        __calibrationWaveSolution : Compute the wavelength solution
+        __currentStatus           : Print text describing the current status
+        __extract                 : Extract the spectrum in the selected region
+        __rotateImage             : Rotate the image
+        __saveSpectrum            : Save the extracted spectrum
+        __selectEvent             : React to a key event calling the appropiate function
+        __selectEventCalibration  : React to a key event calling the appropiate function
         
         PERMANENT PRIVATE MEMBERS (should not be accessed outside the class):
         __calibrated (bool) : True if the spectrum has been calibrated, False otherwise
@@ -101,7 +126,11 @@ class Spectrum(object):
         __ybottom (int)                               : y value of __bottomline
         __ytop (int)                                  : y value of __topline
         __wavelength (np.ndarray)                     : calibrated wavelength for the spectrum
-        
+        __calibration_peaks_plot (matplotlib.lines)   : current calibraton peaks
+        __calibration_peaks_x (list)                  : x position of the calibration peaks
+        __calibration_peaks_y (list)                  : y position of the calibration peaks
+        __calibration_peaks_wl (list)                 : wl solution for the calibration peaks
+        __wave_solution (numpy.lib.polynomial.poly1d) : wavelength solution
         """
     
     def __init__(self, image_name):
@@ -237,6 +266,146 @@ class Spectrum(object):
             self.__topline.set_data(self.__ax.get_xlim(), np.array([event.ydata, event.ydata]))
         self.__ax.figure.canvas.draw()
 
+    def __calibrate(self):
+        """
+        Calibrate using the wavelength solution
+        
+        METHOD: Spectrum.__calibrationCalPeak
+        TYPE: Private
+        
+        PURPOSE:
+        Add or remove a peak to the be used in the calibration.
+        The peak to be set is stored in the transient member __calibration_peaks,
+        which should be present.
+        
+        ARGUMENTS:
+        NONE
+        
+        RETURNS:
+        NONE
+        
+        RAISES:
+        * SpectrumCalibrationError when __calibration_peaks_x, __calibration_peaks_y,
+        __calibration_peaks_wl contain less than three elements
+        
+        EXAMPLES:
+        * ax.figure.canvas.mpl_connect('button_press_event', self.__calibrationPeak)
+        
+        """
+        my_name = '__calibrate'
+        
+        # check that transient members are present
+        if not (hasattr(self, "_Spectrum__wave_solution")):
+            self.__calibrationWaveSolution()
+
+        # calibrate
+        self.__wavelength = self.__wave_solution(np.arange(self.__spectrum.size))
+        self.__calibrated = True
+    
+    def __calibrationPeak(self):
+        """
+        Add or remove a peak to the be used in the calibration
+        
+        METHOD: Spectrum.__calibrationCalPeak
+        TYPE: Private
+        
+        PURPOSE:
+        Add or remove a peak to the be used in the calibration.
+        The peak to be set is stored in the transient member __calibration_peaks,
+        which should be present.
+        
+        ARGUMENTS:
+        NONE
+        
+        RETURNS:
+        NONE
+        
+        RAISES:
+        * SpectrumNameError when one or more of __calibration_peaks_x, __calibration_peaks_y,
+        __calibration_peaks_wl, __calibration_action, or __ax are missing.
+        * SpectrumTypeError when the arguments are of incorrect type
+        
+        EXAMPLES:
+        * ax.figure.canvas.mpl_connect('button_press_event', self.__calibrationPeak)
+        
+        """
+        # TODO: enable angle entry from plotting interface
+        my_name = '__calibrationPeak'
+        
+        # check that transient members are present
+        if not (hasattr(self, "_Spectrum__calibration_peaks_x") and hasattr(self, "_Spectrum__calibration_peaks_y") and hasattr(self, "_Spectrum__calibration_peaks_wl") and hasattr(self, "_Spectrum__ax") and hasattr(self, "_Spectrum__calibration_action")):
+            raise SpectrumNameError(my_name, "One or more of  __calibration_peaks_x, __calibration_peaks_y, __calibration_peaks_wl, __calibration_action, or __ax are missing.")
+
+        # remove old lines
+        for item in self.__calibration_peaks_plot:
+            item.remove()
+        
+        # add peak
+        if self.__calibration_action == CalibrationAction.ADD:
+            # ask for peak info
+            peak_x = int(raw_input("Please enter pixel number (int) -->"))
+            peak_wl = float(raw_input("Please enter wavelength -->"))
+            # store it
+            self.__calibration_peaks_x.append(peak_x)
+            self.__calibration_peaks_y.append(self.__spectrum[peak_x])
+            self.__calibration_peaks_wl.append(peak_wl)
+        # remove peak
+        elif self.__calibration_action == CalibrationAction.REMOVE:
+            # ask for peak info
+            peak_x = int(raw_input("Please enter pixel number -->"))
+            # remove it
+            for i, item in enumerate(self.__calibration_peaks_x):
+                if item == peak_x:
+                    remove = i
+            del self.__calibration_peaks_x[remove]
+            del self.__calibration_peaks_y[remove]
+            del self.__calibration_peaks_wl[remove]
+        self.__calibration_peaks_plot = self.__ax.plot(self.__calibration_peaks_x, self.__calibration_peaks_y, "ro")
+        self.__ax.figure.canvas.draw()
+
+    def __calibrationWaveSolution(self):
+        """
+            Compute the wavelength solution
+            
+            METHOD: Spectrum.__calibrationCalPeak
+            TYPE: Private
+            
+            PURPOSE:
+            Add or remove a peak to the be used in the calibration.
+            The peak to be set is stored in the transient member __calibration_peaks,
+            which should be present.
+            
+            ARGUMENTS:
+            NONE
+            
+            RETURNS:
+            NONE
+            
+            RAISES:
+            * SpectrumNameError when one or more of __calibration_peaks_x, __calibration_peaks_y, or
+            __calibration_peaks_wl are missing
+            * SpectrumTypeError when the arguments are of incorrect type
+            * SpectrumMissingData when __calibration_peaks_x, __calibration_peaks_y,
+            __calibration_peaks_wl contain less than three elements
+            
+            EXAMPLES:
+            * ax.figure.canvas.mpl_connect('button_press_event', self.__calibrationPeak)
+            
+            """
+        my_name = '__calibrationWaveSolution'
+        # check that transient members are present
+        if not (hasattr(self, "_Spectrum__calibration_peaks_x") and hasattr(self, "_Spectrum__calibration_peaks_y") and hasattr(self, "_Spectrum__calibration_peaks_wl")):
+            plt.close()
+            raise SpectrumNameError(my_name, "One or more of __calibration_peaks_x,  __calibration_peaks_y or __calibration_peaks_wl are missing.")
+        
+        # check that transient members are present
+        if (len(self.__calibration_peaks_x) < 3):
+            plt.close()
+            raise SpectrumCalibrationError(my_name, "Could not compute wavelength solution: Three or more points are needed to calibrate")
+        
+        # compute the wavelength solution
+        self.__wave_solution = np.poly1d(np.polyfit(self.__calibration_peaks_x, self.__calibration_peaks_wl, 3))
+    
     def __currentStatus(self):
         """
             Print text describing the current status
@@ -263,9 +432,9 @@ class Spectrum(object):
             """
         my_name = '__currentStatus'
         # check that transient members are present
-        if not (hasattr(self, "_Spectrum__whichline") and hasattr(self, "_Spectrum__status_text") and hasattr(self, "_Spectrum__ax0")):
+        if not (hasattr(self, "_Spectrum__status_text") and hasattr(self, "_Spectrum__ax0") and hasattr(self, "_Spectrum__whichline") and hasattr(self, "_Spectrum__calibration_action")):
             plt.close()
-            raise SpectrumNameError(my_name, "One or more of __whichline, __status_text or __ax0 are missing.")
+            raise SpectrumNameError(my_name, "One or more of __whichline, __calibration_action, __status_text or __ax0 are missing.")
         
         # print current status
         self.__status_text.remove()
@@ -420,7 +589,48 @@ class Spectrum(object):
 
         f.close()
             
+    def __saveWavelengthSolution(self):
+        """
+            Save the wavelength solution
+            
+            METHOD: Spectrum.__saveWavelengthSolution
+            TYPE: Private
+            
+            PURPOSE:
+            Save the wavelength solution. The name of the file is the same as the input file,
+            but with the extension replaced by '_wave_solution.pkl' appended to it. If __calibrated
+            is not set, then do nothing.
+            
+            ARGUMENTS:
+            NONE
+            
+            RETURNS:
+            NONE
+            
+            RAISES:
+            * SpectrumNameError when __spectrum is missing and __extracted is set.
+            * SpectrumNameError when __wavelength is missing and __calibrated is set
+            
+            EXAMPLES:
+            * self.__saveSpectrum()
+            
+            """
+        my_name = '__saveWavelengthSolution'
+        
+        # check that transient members are present
+        if not hasattr(self, "_Spectrum__wave_solution") and self.__extract:
+            raise SpectrumNameError(my_name, "__wave_solution is missing.")
     
+        # return if __calibrated is not set
+        if not self.__calibrated:
+            return
+            
+        # save the wavelength solution
+        filename = "{}_wave_solution.pkl".format(self.__name)
+        save_file = open(filename, 'wb')
+        pickle.dump(self.__wave_solution, save_file)
+        save_file.close()
+
     def __selectEvent(self, event):
         """
             React to a key event calling the appropiate function
@@ -474,6 +684,59 @@ class Spectrum(object):
         # update figure
         self.__currentStatus()
 
+    def __selectEventCalibration(self, event):
+        """
+        React to a key event calling the appropiate function
+        
+        METHOD: Spectrum.__selectEventCalibration
+        TYPE: Private
+        
+        PURPOSE:
+        React to a key event calling the appropiate function. Reactions include setting which
+        horizontal line to draw and rotating the image
+        
+        ARGUMENTS:
+        event (KeyEvent) : Event with the pressed key
+        
+        RETURNS:
+        NONE
+        
+        RAISES:
+        * SpectrumTypeError when the arguments are of incorrect type
+        
+        EXAMPLES:
+        * self.__ax.figure.canvas.mpl_connect('key_press_event', self.__selectEventCalibration)
+        
+        """
+        my_name = '__selectEventCalibration'
+        # check arguments type
+        if not isinstance(event, KeyEvent):
+            plt.close()
+            raise SpectrumTypeError(my_name, "Argument 'event' has incorrect type")
+                
+        # event selected: add point
+        if event.key == "a":
+            self.__calibration_action = CalibrationAction.ADD
+            self.__calibrationPeak()
+        # event selected: remove point
+        elif event.key == "r":
+            self.__calibration_action = CalibrationAction.REMOVE
+            self.__calibrationPeak()
+        # event selected: calibrate
+        elif event.key == "c":
+            self.__calibration_action = CalibrationAction.NONE
+            self.__calibrate()
+            plt.close()
+            return
+        # event selected: quit
+        elif event.key == "q":
+            plt.close()
+            return
+        else:
+            self.__calibration_action = CalibrationAction.NONE
+        # update figure
+        self.__currentStatus()
+    
     def extract(self):
         """
             Extract the spectrum
@@ -514,6 +777,7 @@ class Spectrum(object):
         # draw empty lines, then plot image
         self.__ax = self.__fig.add_subplot(self.__gs[1])
         self.__whichline = SelectLine.NONE
+        self.__calibration_action = CalibrationAction.NONE
         self.__ytop = -1
         self.__topline, = self.__ax.plot([0], [0], linewidth=1, linestyle='solid', color='red')
         self.__ybottom = 0
@@ -534,11 +798,48 @@ class Spectrum(object):
         # save extracted spectrum and clean up memory
         if self.__extracted:
             self.__saveSpectrum()
-            del self.__fig, self.__ax, self.__ax0, self.__gs, self.__status_text, self.__topline, self.__bottomline, self.__whichline, self.__ytop, self.__ybottom, self.__imshow
+            del self.__fig, self.__ax, self.__ax0, self.__gs, self.__status_text, self.__topline, self.__bottomline, self.__whichline, self.__ytop, self.__ybottom, self.__imshow, self.__calibration_action
             return "Extraction success"
         else:
-            del self.__fig, self.__ax, self.__ax0, self.__gs, self.__status_text, self.__topline, self.__bottomline, self.__whichline, self.__ytop, self.__ybottom, self.__imshow
+            del self.__fig, self.__ax, self.__ax0, self.__gs, self.__status_text, self.__topline, self.__bottomline, self.__whichline, self.__ytop, self.__ybottom, self.__imshow, self.__calibration_action
             return "Extraction failed"
+
+    def loadCalibration(self):
+        """
+            Load the wavelength solution, then calibrate the spectrum
+            
+            METHOD: Spectrum.setCalibration
+            TYPE: Public
+            
+            PRUPOSE:
+            Set the calibration peaks
+            
+            ARGUMENTS:
+            NONE
+            
+            RETUNRS:
+            An empty string upon success
+            """
+    
+        # check that the spectrum is already extracted
+        if not self.__extracted:
+            return "Extract spectrum first"
+
+        # load the wavelength solution
+        filename = raw_input("Enter filename for wavelength solution  --> ")
+        load_file = open(filename, 'rb')
+        self.__wave_solution = pickle.load(load_file)
+        load_file.close()
+
+        # calibrate
+        self.__calibrate()
+
+        # save the calibrated spectrum
+        if self.__calibrated:
+            self.__saveSpectrum()
+            return "Calibration success"
+        else:
+            return "Calibration failed"
 
     def plotRawSpectrum(self):
         """
@@ -571,18 +872,19 @@ class Spectrum(object):
         # create figure
         self.__fig = plt.figure(figsize=FIGSIZE_HORIZONTAL)
         self.__gs = gridspec.GridSpec(1, 1)
-        self.__gs.update(bottom=0.1)
+        self.__gs.update(bottom=0.15)
 
-        # draw empty lines, then plot image
+        # plot image
         self.__ax = self.__fig.add_subplot(self.__gs[0])
         self.__ax.plot(self.__spectrum)
         self.__ax.set_xlabel("x pixel", fontsize=FONTSIZE)
         self.__ax.set_ylabel("intensity", fontsize=FONTSIZE)
-        self.__ax.tick_params()
+        self.__ax.tick_params(which="both", pad=PAD, direction="inout", top=True,
+                              bottom=True, labelsize=LABELSIZE)
         plt.show()
 
         # clean up memory
-        del self.__fig, self.__ax
+        del self.__fig, self.__ax, self.__gs
         return ""
 
     def plotCalibratedSpectrum(self):
@@ -600,11 +902,9 @@ class Spectrum(object):
             
             RETUNRS:
             An empty string upon success or an error message
-            
-            # check that transient members are present
-            # TODO: add check
             """
-
+        
+        # check that that the spectrum is extracted and calibrated
         if not self.__extracted:
             return "Extract spectrum first"
         if not self.__calibrated:
@@ -613,15 +913,99 @@ class Spectrum(object):
         # create figure
         self.__fig = plt.figure(figsize=FIGSIZE_HORIZONTAL)
         self.__gs = gridspec.GridSpec(1, 1)
-        self.__gs.update(bottom=0.1)
+        self.__gs.update(bottom=0.15)
         
         # draw empty lines, then plot image
         self.__ax = self.__fig.add_subplot(self.__gs[0])
         self.__ax.plot(self.__wavelength, self.__spectrum)
         self.__ax.set_xlabel(r"wavelength $\left(\AA\right)$", fontsize=FONTSIZE)
         self.__ax.set_ylabel("intensity", fontsize=FONTSIZE)
+        self.__ax.tick_params(which="both", pad=PAD, direction="inout", top=True,
+                              bottom=True, labelsize=LABELSIZE)
         plt.show()
         
         # clean up memory
         del self.__fig, self.__ax
         return ""
+
+    def setCalibration(self):
+        """
+            Set the calibration peaks, then calibrate the spectrum
+            
+            METHOD: Spectrum.setCalibration
+            TYPE: Public
+            
+            PRUPOSE:
+            Set the calibration peaks
+            
+            ARGUMENTS:
+            NONE
+            
+            RETUNRS:
+            An empty string upon success
+            """
+        
+        # create figure
+        self.__fig = plt.figure(figsize=FIGSIZE_HORIZONTAL)
+        self.__gs = gridspec.GridSpec(2, 1, height_ratios=[1,10])
+        self.__gs.update(hspace=0.2, bottom=0.15)
+        
+        # draw legend
+        self.__ax0 = self.__fig.add_subplot(self.__gs[0])
+        self.__ax0.text(0.0, 0.5, "a: add peak\nr: remove peak\nc: calibrate\nq: quit", horizontalalignment='left', verticalalignment='center', transform=self.__ax0.transAxes, fontsize=15)
+        self.__status_text = self.__ax0.text(1.0, 0.5, "", horizontalalignment='right', verticalalignment='center', transform=self.__ax0.transAxes, fontsize=15)
+        self.__ax0.axis('off')
+        
+        # draw empty lines, then plot image
+        self.__ax = self.__fig.add_subplot(self.__gs[1])
+        self.__calibration_peaks_x = []
+        self.__calibration_peaks_y = []
+        self.__calibration_peaks_wl = []
+        self.__calibration_peaks_plot = self.__ax.plot(self.__calibration_peaks_x, self.__calibration_peaks_y, "ro")
+        self.__whichline = SelectLine.NONE
+        self.__calibration_action = CalibrationAction.NONE
+        self.__ax.plot(self.__spectrum)
+        self.__ax.set_xlabel("x pixel", fontsize=FONTSIZE)
+        self.__ax.set_ylabel("intensity", fontsize=FONTSIZE)
+        self.__ax.tick_params(which="both", pad=PAD, direction="inout", top=True,
+                              bottom=True, labelsize=LABELSIZE)
+        
+        # add functionality
+        try:
+            self.__ax.figure.canvas.mpl_connect('key_press_event', self.__selectEventCalibration)
+            plt.show()
+        except SpectrumError as e:
+            plt.close()
+            raise e
+                
+        # save wavelength solution and the calibrated spectrum and clean up memory
+        if self.__calibrated:
+            self.__saveWavelengthSolution()
+            self.__saveSpectrum()
+            del self.__fig, self.__ax, self.__ax0, self.__gs, self.__status_text, self.__whichline, self.__calibration_peaks_plot, self.__calibration_peaks_x, self.__calibration_peaks_y, self.__calibration_peaks_wl
+            return "Calibration success"
+        else:
+            del self.__fig, self.__ax, self.__ax0, self.__gs, self.__status_text, self.__whichline, self.__calibration_peaks_plot, self.__calibration_peaks_x, self.__calibration_peaks_y, self.__calibration_peaks_wl
+            return "Calibration failed"
+
+    def setExtractedSpectrum(self, spectrum):
+        """
+            Set the extracted spectrum
+            
+            METHOD: Spectrum.setExtractedSpectrum
+            TYPE: Public
+            
+            PRUPOSE:
+            Set the extracted spectrum. Should only be used in debugging
+            
+            ARGUMENTS:
+            NONE
+            
+            RETUNRS:
+            NONE
+            
+            # check that transient members are present
+            # TODO: add check
+            """
+        self.__spectrum = spectrum
+        self.__extracted = True
