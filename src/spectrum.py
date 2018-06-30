@@ -69,7 +69,8 @@ class SelectLine(Enum):
 class CalibrationAction(Enum):
     ADD = 1
     REMOVE = 2
-    NONE = 3
+    LOAD = 3
+    NONE = 4
 
 class Spectrum(object):
     """
@@ -336,10 +337,6 @@ class Spectrum(object):
         # check that transient members are present
         if not (hasattr(self, "_Spectrum__calibration_peaks_x") and hasattr(self, "_Spectrum__calibration_peaks_y") and hasattr(self, "_Spectrum__calibration_peaks_wl") and hasattr(self, "_Spectrum__ax") and hasattr(self, "_Spectrum__calibration_action")):
             raise SpectrumNameError(my_name, "One or more of  __calibration_peaks_x, __calibration_peaks_y, __calibration_peaks_wl, __calibration_action, or __ax are missing.")
-
-        # remove old lines
-        for item in self.__calibration_peaks_plot:
-            item.remove()
         
         # add peak
         if self.__calibration_action == CalibrationAction.ADD:
@@ -361,6 +358,16 @@ class Spectrum(object):
             del self.__calibration_peaks_x[remove]
             del self.__calibration_peaks_y[remove]
             del self.__calibration_peaks_wl[remove]
+        elif self.__calibration_action == CalibrationAction.LOAD:
+            filename = raw_input("Enter filename with peak information  --> ")
+            data = np.genfromtxt(filename, names=True)
+            self.__calibration_peaks_x = list(data["x"].astype(int))
+            self.__calibration_peaks_wl = list(data["wavelengthAngs"])
+            self.__calibration_peaks_y = [self.__spectrum[item] for item in self.__calibration_peaks_x]
+            
+        # replot peaks
+        for item in self.__calibration_peaks_plot:
+            item.remove()
         self.__calibration_peaks_plot = self.__ax.plot(self.__calibration_peaks_x, self.__calibration_peaks_y, "ro")
         self.__ax.figure.canvas.draw()
 
@@ -575,7 +582,7 @@ class Spectrum(object):
             raise SpectrumNameError(my_name, "One or more of __calibration_peaks_x,  __calibration_peaks_y or __calibration_peaks_wl are missing.")
 
         f = open("{}_wave_solution_peaks.dat".format(self.__name), 'w')
-        f.write("# x wavelength\n")
+        f.write("# x wavelength(Angs)\n")
         [f.write("{} {}\n".format(x, w)) for x, w in zip(self.__calibration_peaks_x, self.__calibration_peaks_wl)]
         f.close()
 
@@ -769,6 +776,10 @@ class Spectrum(object):
             self.__calibrate()
             plt.close()
             return
+        # event selected: load peaks from file
+        elif event.key == "l":
+            self.__calibration_action = CalibrationAction.LOAD
+            self.__calibrationPeak()
         # event selected: quit
         elif event.key == "q":
             plt.close()
@@ -867,10 +878,13 @@ class Spectrum(object):
             return "Extract spectrum first"
 
         # load the wavelength solution
-        filename = raw_input("Enter filename for wavelength solution  --> ")
-        load_file = open(filename, 'rb')
-        self.__wave_solution = pickle.load(load_file)
-        load_file.close()
+        try:
+            filename = raw_input("Enter filename for wavelength solution  --> ")
+            load_file = open(filename, 'rb')
+            self.__wave_solution = pickle.load(load_file)
+            load_file.close()
+        except KeyError as e:
+            return "Calibration failed: unable to open pkl file"
 
         # calibrate
         self.__calibrate()
@@ -993,7 +1007,7 @@ class Spectrum(object):
         
         # draw legend
         self.__ax0 = self.__fig.add_subplot(self.__gs[0])
-        self.__ax0.text(0.0, 0.5, "a: add peak\nr: remove peak\nc: calibrate\nq: quit", horizontalalignment='left', verticalalignment='center', transform=self.__ax0.transAxes, fontsize=15)
+        self.__ax0.text(0.0, 0.5, "a: add peak\nr: remove peak\nl: load peaks from file\nc: calibrate\nq: quit", horizontalalignment='left', verticalalignment='center', transform=self.__ax0.transAxes, fontsize=15)
         self.__status_text = self.__ax0.text(1.0, 0.5, "", horizontalalignment='right', verticalalignment='center', transform=self.__ax0.transAxes, fontsize=15)
         self.__ax0.axis('off')
         
