@@ -95,6 +95,7 @@ class Spectrum(object):
         __currentStatus           : Print text describing the current status
         __extract                 : Extract the spectrum in the selected region
         __rotateImage             : Rotate the image
+        __saveCalibrationPeaks    : Save the peaks used for calibration
         __saveSpectrum            : Save the extracted spectrum
         __selectEvent             : React to a key event calling the appropiate function
         __selectEventCalibration  : React to a key event calling the appropiate function
@@ -403,6 +404,9 @@ class Spectrum(object):
             plt.close()
             raise SpectrumCalibrationError(my_name, "Could not compute wavelength solution: Three or more points are needed to calibrate")
         
+        # save calibration inputs
+        self.__saveCalibrationPeaks()
+        
         # compute the wavelength solution
         self.__wave_solution = np.poly1d(np.polyfit(self.__calibration_peaks_x, self.__calibration_peaks_wl, 3))
     
@@ -537,6 +541,43 @@ class Spectrum(object):
         del self.__imshow
         self.__imshow = self.__ax.imshow(self.__data, cmap=CMAP, origin='lower')
         self.__ax.figure.canvas.draw()
+
+    def __saveCalibrationPeaks(self):
+        """
+            Save the peaks used for calibration
+            
+            METHOD: Spectrum.__saveSpectrum
+            TYPE: Private
+            
+            PURPOSE:
+            Save the peaks used for calibration. The name of the file is the same as the input file,
+            but with the extension replaced by '_wave_solution_peaks.dat' appended to it. If __calibrated
+            is not set, then do nothing.
+            
+            ARGUMENTS:
+            NONE
+            
+            RETURNS:
+            NONE
+            
+            RAISES:
+            * SpectrumNameError when __spectrum is missing and __extracted is set.
+            * SpectrumNameError when __wavelength is missing and __calibrated is set
+            
+            EXAMPLES:
+            * self.__saveSpectrum()
+            
+            """
+        my_name = '__saveCalibrationPeaks'
+        # check that transient members are present
+        if not (hasattr(self, "_Spectrum__calibration_peaks_x") and hasattr(self, "_Spectrum__calibration_peaks_y") and hasattr(self, "_Spectrum__calibration_peaks_wl")):
+            plt.close()
+            raise SpectrumNameError(my_name, "One or more of __calibration_peaks_x,  __calibration_peaks_y or __calibration_peaks_wl are missing.")
+
+        f = open("{}_wave_solution_peaks.dat".format(self.__name), 'w')
+        f.write("# x wavelength\n")
+        [f.write("{} {}\n".format(x, w)) for x, w in zip(self.__calibration_peaks_x, self.__calibration_peaks_wl)]
+        f.close()
 
     def __saveSpectrum(self):
         """
