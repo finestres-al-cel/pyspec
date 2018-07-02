@@ -712,7 +712,6 @@ class Spectrum(object):
         # event selected: rotation
         if event.key == "r":
             self.__rotateImage()
-            return
         # event selected: select lines
         elif event.key == "t":
             self.__whichline = SelectLine.TOP
@@ -1064,3 +1063,6 @@ class Spectrum(object):
             """
         self.__spectrum = spectrum
         self.__extracted = True
+
+if __name__ == "__main__":
+    pass
