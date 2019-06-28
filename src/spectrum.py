@@ -495,7 +495,8 @@ class Spectrum(object):
             raise SpectrumExtractionError(my_name, "Could not extract: top line below bottom line")
         
         # extract spectrum
-        self.__spectrum = np.mean(self.__data[self.__ybottom:self.__ytop,:], axis=0)
+        # TODO: remove the [::2] once the problem with MaximDL is fixed
+        self.__spectrum = np.mean(self.__data[self.__ybottom:self.__ytop,:], axis=0)[::2]
         self.__extracted = True
             
     def __rotateImage(self):
