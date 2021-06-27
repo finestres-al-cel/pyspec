@@ -1,4 +1,4 @@
-from error import Error
+from errors.error import Error
 
 class SpectrumError(Error):
     """
@@ -7,7 +7,7 @@ class SpectrumError(Error):
     def __str__(self):
         """
             Returns a printable representation of the error message
-            
+
             FUNCTION: SpectrumError.__str__
             TYPE: Public
             PURPOSE: Returns a printable representation of the error message
@@ -20,4 +20,3 @@ class SpectrumError(Error):
 
 if __name__ == '__main__':
     pass
-

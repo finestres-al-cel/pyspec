@@ -1,4 +1,4 @@
-from spectrum_error import SpectrumError
+from errors.spectrum_error import SpectrumError
 
 class SpectrumTypeError(SpectrumError):
     """
@@ -8,20 +8,20 @@ class SpectrumTypeError(SpectrumError):
     def __init__(self, method, message):
         """
             Initialize class instance
-            
+
             METHOD: SpectrumTypeError.__init__
             TYPE: Constructor, public
-            
+
             PURPOSE:
             Initialize class instance
-            
+
             ARGUMENTS:
             method (string):           Name of the mehtod of Spectrum that produced the error
             message (string):          The error message
-            
+
             RETURNS:
             NONE
-            
+
             EXAMPLES:
             * raise SpectrumFormatError(aMethod, "An error message")
             """
@@ -30,4 +30,3 @@ class SpectrumTypeError(SpectrumError):
 
 if __name__ == '__main__':
     raise SpectrumTypeError()
-

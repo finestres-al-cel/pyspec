@@ -1,13 +1,14 @@
 import os
 import gnureadline
 import glob
+from builtins import input
 import numpy as np
 
 from spectrum import Spectrum
 from errors.spectrum_error import SpectrumError
 
 
-# this is so that raw_input can autocomplete using the tab
+# this is so that input can autocomplete using the tab
 def complete(text, state):
     return (glob.glob(text+'*')+[None])[state]
 
@@ -54,52 +55,52 @@ def loadRawCalibrationSpectrum():
     except SpectrumError as e:
         message = "{}\nLoad error".format(e)
         return message, None
-    
+
     return "Load successful", spec
 
 
 def loadImage():
-    image_name = raw_input("Enter image name --> ")
+    image_name = input("Enter image name --> ")
     try:
         spec = Spectrum(image_name)
     except SpectrumError as e:
         message = "{}\nLoad error".format(e)
         return message, None
-    
+
     return "Load successful", spec
 
 
 if __name__ == "__main__":
-    
-    
+
+
     status = "main"
     message = ""
     while status != "end":
         os.system('clear')
         option = -1
-        print "###################################"
-        print "#        Welcome to PySpec        #"
-        print "#        test mode enabled        #"
-        print "#                                 #"
-        print "# Choose an option:               #"
-        print "#   1: (Re)Load image             #"
-        print "#   2: Extract spectrum           #"
-        print "#   3: Plot raw spectrum          #"
-        print "#   4: Set calibration            #"
-        print "#   5: Load calibration           #"
-        print "#   6: Plot calibrated spectrum   #"
-        print "#                                 #"
-        print "#   0: End                        #"
-        print "#                                 #"
-        print "###################################"
+        print("###################################")
+        print("#        Welcome to PySpec        #")
+        print("#        test mode enabled        #")
+        print("#                                 #")
+        print("# Choose an option:               #")
+        print("#   1: (Re)Load image             #")
+        print("#   2: Extract spectrum           #")
+        print("#   3: Plot raw spectrum          #")
+        print("#   4: Set calibration            #")
+        print("#   5: Load calibration           #")
+        print("#   6: Plot calibrated spectrum   #")
+        print("#                                 #")
+        print("#   0: End                        #")
+        print("#                                 #")
+        print("###################################")
 
         # read chosen option
         try:
-            option = int(raw_input("{} --> ".format(message)))
+            option = int(input("{} --> ".format(message)))
             meassage = ""
         except ValueError:
             message = ""
-            
+
         # end program
         if option == 0:
             status = "end"
@@ -117,7 +118,7 @@ if __name__ == "__main__":
                 try:
                     message = spec.extract()
                 except (AttributeError, NameError) as e:
-                    print e
+                    print(e)
                     message = "Load spectrum first"
 
         # plot raw spectrum
@@ -129,9 +130,9 @@ if __name__ == "__main__":
                     message, spec = loadRawSpectrum()
                     message = spec.plotRawSpectrum()
                 except (AttributeError, NameError) as e:
-                    print e
+                    print(e)
                     message = "Extract spectrum first"
-                
+
         # set calibration
         elif option == 4:
             try:
@@ -141,9 +142,9 @@ if __name__ == "__main__":
                     message, spec = loadRawCalibrationSpectrum()
                     message = spec.setCalibration()
                 except (AttributeError, NameError) as e:
-                    print e
+                    print(e)
                     message = "Extract spectrum first"
-        
+
         # calibrate
         elif option == 5:
             try:
@@ -153,7 +154,7 @@ if __name__ == "__main__":
                     message, spec = loadRawCalibrationSpectrum()
                     message = spec.loadCalibration()
                 except (AttributeError, NameError) as e:
-                    print e
+                    print(e)
                     message = "Extract spectrum first"
 
         # plot calibrated spectrum
