@@ -20,7 +20,7 @@ __version__astropy = '1.3'
 __version__matplotlib = '2.0.0'
 __version__scipy = '0.18.1'
 
-import gnureadline
+import readline
 import glob
 from builtins import input
 import astropy.io.fits as fits
@@ -43,9 +43,9 @@ from errors.spectrum_calibration_error import SpectrumCalibrationError
 def complete(text, state):
     return (glob.glob(text+'*')+[None])[state]
 
-gnureadline.set_completer_delims(' \t\n;')
-gnureadline.parse_and_bind("tab: complete")
-gnureadline.set_completer(complete)
+readline.set_completer_delims(' \t\n;')
+readline.parse_and_bind("tab: complete")
+readline.set_completer(complete)
 
 
 # figure settings

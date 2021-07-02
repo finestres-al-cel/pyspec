@@ -1,5 +1,5 @@
 import os
-import gnureadline
+import readline
 import glob
 from builtins import input
 import numpy as np
@@ -12,9 +12,9 @@ from errors.spectrum_error import SpectrumError
 def complete(text, state):
     return (glob.glob(text+'*')+[None])[state]
 
-gnureadline.set_completer_delims(' \t\n;')
-gnureadline.parse_and_bind("tab: complete")
-gnureadline.set_completer(complete)
+readline.set_completer_delims(' \t\n;')
+readline.parse_and_bind("tab: complete")
+readline.set_completer(complete)
 
 def loadTestImage():
     image_name = "test/test_image.fits"
