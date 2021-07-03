@@ -215,7 +215,7 @@ class Spectrum(object):
             except ValueError:
                 raise SpectrumFormatError(my_name, "Data file has invalid format")
             try:
-                self.__wavelength = data["wavelength(Angs)"]
+                self.__wavelength = data["wavelengthAngs"]
                 self.__calibrated = True
             except ValueError:
                 self.__calibrated = False
