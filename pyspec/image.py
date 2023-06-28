@@ -1,5 +1,6 @@
 """ Basic Image """
 from astropy.io import fits
+from scipy.ndimage import rotate
 
 from pyspec.errors import ImageError
 
@@ -15,13 +16,16 @@ class Image:
     Attributes
     ----------
     data: array of float
-    The image data
+    The current image data
 
     filename: str
     Name of the file containing the image
 
     header: astropy.io.fits.header.Header
     The image header
+
+    original_data: array of float
+    The original image data
     """
     def __init__(self, filename):
         """Initialize instance
@@ -49,7 +53,7 @@ class Image:
                 format_ok = True
         if not format_ok:
             raise ImageError(
-                f"{self.__name__}: 'filename' has incorrect extension. Valid"
+                f"Image: 'filename' has incorrect extension. Valid"
                 "extensions are " + ", ".join(ACCEPTED_FORMATS)
                 )
 
@@ -61,5 +65,43 @@ class Image:
         self.filename = filename
         self.header = hdu[0].header
         self.data = hdu[0].data
+        self.original_data = self.data.copy()
+
+        self.rotation_angle = 0.0
 
         hdu.close()
+
+    def rotate(self, rotation_angle_str):
+        """Rotate image
+
+        Keep the original image and the rotation angle. Further calls to this
+        function will update the value of the rotation angle and rotate from
+        the original data.
+
+        Add a comment in the header
+
+        Arguments
+        ---------
+        rotation_angle_str: str
+        The rotation angle as a string
+
+        Raise
+        -----
+        ImageError when the string does not contain a float
+        """
+        try:
+            rotation_angle = float(rotation_angle_str)
+        except ValueError as error:
+            raise ImageError(
+                "Image: rotation angle must be a float. Found "
+                f"{rotation_angle_str}") from error
+
+        self.rotation_angle += rotation_angle
+        print(self.rotation_angle)
+        self.header["COMMENTS"] = (
+            f"Pyspec: Image rotated by {rotation_angle} degrees")
+
+        if self.rotation_angle == 0.0:
+            self.data = self.original_data.copy()
+        else:
+            self.data = rotate(self.original_data, self.rotation_angle)
