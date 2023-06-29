@@ -16,6 +16,9 @@ class ImageView(pg.PlotWidget):
     activateChooseLimitOnClick
     deactivateChooseLimitOnClick
     mousePressEvent
+    setImge
+    setPlot
+    updatePlot
 
     Attributes
     ----------
@@ -53,16 +56,14 @@ class ImageView(pg.PlotWidget):
         self.lowerLimit = None
         self.upperLimit = None
 
+        # load plot settings
+        self.setPlot()
+
         # plot image
         self.imageItem = None
         self.lowerLimitItem = None
         self.upperLimitItem = None
         self.updatePlot()
-
-        # do not plot ROI and menu
-        #self.ui.roiBtn.hide()
-        #self.ui.menuBtn.hide()
-
 
     def activateChooseLimitOnClick(self, menuAction):
         """Activate on click actions
@@ -121,28 +122,42 @@ class ImageView(pg.PlotWidget):
             super().mousePressEvent(event)
 
     def setImage(self, image):
+        """Set image and update plot accordingly
+
+        Arguments
+        ---------
+        image: Image
+        The new image
+        """
         self.imageData = image.data
         self.imageShape = image.data.shape
         self.updatePlot()
 
     def setPlot(self):
+        """Load plot settings"""
+
         # add label
         self.setLabel(axis='left', text='Y-pixel')
         self.setLabel(axis='bottom', text='X-pixel')
 
     def updatePlot(self):
+        """Update plot"""
+        # reset plot
         self.clear()
+
+        # plot image
         self.imageItem = pg.ImageItem(self.imageData)
         self.addItem(self.imageItem)
 
+        # plot lower limit if active
         if self.lowerLimit is not None:
             pen = pg.mkPen("r")
             self.lowerLimitItem = pg.InfiniteLine(
                 angle=0, movable=False, pen=pen)
             self.lowerLimitItem.setPos(self.lowerLimit)
-            #self.lowerLimitItem.setPen(QPen(Qt.GlobalColor.red))
             self.addItem(self.lowerLimitItem)
 
+        # plot upper limit if active
         if self.upperLimit is not None:
             pen = pg.mkPen("g")
             self.upperLimitItem = pg.InfiniteLine(

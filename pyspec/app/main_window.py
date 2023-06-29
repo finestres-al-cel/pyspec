@@ -146,11 +146,14 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(message)
 
+    def extractSpectrum(self):
+        return
+
     def onMyToolBarButtonClick(self, s):
         print("click", s)
 
     @pyqtSlot()
-    def open_file(self):
+    def openFile(self):
         """Open dialog to select and open file"""
         filename, _ = QFileDialog.getOpenFileName(
             self,
@@ -174,7 +177,7 @@ class MainWindow(QMainWindow):
         except ImageError as error:
             self.statusBar().showMessage(str(error))
 
-    def rotate_image(self):
+    def rotateImage(self):
         """ Rotate image.
 
         Asks the user for the rotation angle and stores the result

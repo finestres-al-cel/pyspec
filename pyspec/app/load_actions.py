@@ -23,7 +23,7 @@ def loadFileMenuActions(window):
         "&Load Spectrum",
         window)
     load_spectrum_option.setStatusTip("Load Spectrum")
-    load_spectrum_option.triggered.connect(window.open_file)
+    load_spectrum_option.triggered.connect(window.openFile)
     menuActions.append(load_spectrum_option)
 
     return menuActions
@@ -48,7 +48,7 @@ def loadSpectralExtractionActions(window):
         "&Extract Spectrum",
         window)
     extract_spectrum_option.setStatusTip("Extract Spectrum")
-    extract_spectrum_option.triggered.connect(window.onMyToolBarButtonClick)
+    extract_spectrum_option.triggered.connect(window.extractSpectrum)
     extract_spectrum_option.setCheckable(True)
     extract_spectrum_option.setEnabled(False)
     menuActions.append(extract_spectrum_option)
@@ -58,7 +58,7 @@ def loadSpectralExtractionActions(window):
         "&Rotate Image",
         window)
     rotate_image_option.setStatusTip("Rotate Image")
-    rotate_image_option.triggered.connect(window.rotate_image)
+    rotate_image_option.triggered.connect(window.rotateImage)
     rotate_image_option.setEnabled(False)
     menuActions.append(rotate_image_option)
 
