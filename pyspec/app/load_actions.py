@@ -54,7 +54,7 @@ def loadSpectralExtractionActions(window):
     menuActions.append(extract_spectrum_option)
 
     rotate_image_option = QAction(
-        QIcon(f"{BUTTONS_PATH}/extract_spectrum.jpg"),
+        QIcon(f"{BUTTONS_PATH}/rotate.png"),
         "&Rotate Image",
         window)
     rotate_image_option.setStatusTip("Rotate Image")
@@ -63,7 +63,7 @@ def loadSpectralExtractionActions(window):
     menuActions.append(rotate_image_option)
 
     set_upper_limit_option = QAction(
-        QIcon(f"{BUTTONS_PATH}/extract_spectrum.jpg"),
+        QIcon(f"{BUTTONS_PATH}/upper_lim.png"),
         "Set &Upper Limit",
         window)
     set_upper_limit_option.setStatusTip("Set Upper Limit")
@@ -75,7 +75,7 @@ def loadSpectralExtractionActions(window):
     menuActions.append(set_upper_limit_option)
 
     set_lower_limit_option = QAction(
-        QIcon(f"{BUTTONS_PATH}/extract_spectrum.jpg"),
+        QIcon(f"{BUTTONS_PATH}/lower_lim.png"),
         "Set &Lower Limit",
         window)
     set_lower_limit_option.setStatusTip("Set Lower Limit")
@@ -88,9 +88,8 @@ def loadSpectralExtractionActions(window):
 
     return menuActions
 
-
-def loadOtherActions(window):
-    """Load other menu actions
+def loadSpectrumActions(window):
+    """Load spectrum menu actions
 
     Arguments
     ---------
@@ -100,18 +99,18 @@ def loadOtherActions(window):
     Return
     ------
     menuAction: list of QAction
-    List of actions in the other menu
+    List of actions in the spectrum menu
     """
     menuActions = []
 
-    plot_raw_spectrum_option = QAction(
-        QIcon(f"{BUTTONS_PATH}/plot_spec.png"),
-        "&Plot Spectrum",
+    save_spectrum_option = QAction(
+        QIcon(f"{BUTTONS_PATH}/save.png"),
+        "&Save Spectrum",
         window)
-    plot_raw_spectrum_option.setStatusTip("Plot Spectrum")
-    plot_raw_spectrum_option.triggered.connect(window.onMyToolBarButtonClick)
-    plot_raw_spectrum_option.setCheckable(True)
-    menuActions.append(plot_raw_spectrum_option)
+    save_spectrum_option.setStatusTip("Save Spectrum")
+    save_spectrum_option.triggered.connect(window.saveSpectrum)
+    save_spectrum_option.setEnabled(False)
+    menuActions.append(save_spectrum_option)
 
     set_calibration_option = QAction(
         QIcon(f"{BUTTONS_PATH}/set_calib.png"),
@@ -120,6 +119,7 @@ def loadOtherActions(window):
     set_calibration_option.setStatusTip("Set Calibration")
     set_calibration_option.triggered.connect(window.onMyToolBarButtonClick)
     set_calibration_option.setCheckable(True)
+    set_calibration_option.setEnabled(False)
     menuActions.append(set_calibration_option)
 
     load_calibration_option = QAction(
@@ -129,6 +129,7 @@ def loadOtherActions(window):
     load_calibration_option.setStatusTip("Load Calibration")
     load_calibration_option.triggered.connect(window.onMyToolBarButtonClick)
     load_calibration_option.setCheckable(True)
+    load_calibration_option.setEnabled(False)
     menuActions.append(load_calibration_option)
 
     return menuActions

@@ -51,7 +51,7 @@ class SpectrumView(pg.PlotWidget):
     def setPlot(self):
         """Load plot settings"""
 
-        self.setLabel(axis='left', text='Intensity')
+        self.setLabel(axis='left', text='Flux')
         if self.spectrum.wavelength is None:
             self.setLabel(axis='bottom', text='X-pixel')
         else:

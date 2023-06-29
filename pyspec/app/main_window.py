@@ -17,12 +17,13 @@ from pyspec.app.environment import WIDTH, HEIGHT, ICON_SIZE
 from pyspec.app.load_actions import (
     loadFileMenuActions,
     loadSpectralExtractionActions,
-    loadOtherActions
+    loadSpectrumActions
 )
 from pyspec.app.image_view import ImageView
 from pyspec.app.rotate_image_dialog import RotateImageDialog
 from pyspec.app.spectrum_view import SpectrumView
-from pyspec.errors import ImageError
+from pyspec.app.utils import getFileType
+from pyspec.errors import ImageError, SpectrumError
 from pyspec.image import Image
 from pyspec.spectrum import Spectrum
 
@@ -62,7 +63,7 @@ class MainWindow(QMainWindow):
 
         self.extractSpectrumActions = loadSpectralExtractionActions(self)
         self.fileActions = loadFileMenuActions(self)
-        self.otherActions = loadOtherActions(self)
+        self.spectrumActions = loadSpectrumActions(self)
 
         self._createToolBar()
         self._createStatusBar()
@@ -87,12 +88,12 @@ class MainWindow(QMainWindow):
             extractSpectrumToolBar.addSeparator()
         self.addToolBar(extractSpectrumToolBar)
 
-        otherToolBar = QToolBar("Other toolbar")
-        otherToolBar.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
-        for menuAction in self.otherActions:
-            otherToolBar.addAction(menuAction)
-            otherToolBar.addSeparator()
-        self.addToolBar(otherToolBar)
+        spectrumToolBar = QToolBar("Spectrum")
+        spectrumToolBar.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
+        for menuAction in self.spectrumActions:
+            spectrumToolBar.addAction(menuAction)
+            spectrumToolBar.addSeparator()
+        self.addToolBar(spectrumToolBar)
 
     def _createMenuBar(self):
         """Create menu bars"""
@@ -108,10 +109,10 @@ class MainWindow(QMainWindow):
             extractSpectrumMenu.addAction(menuAction)
             extractSpectrumMenu.addSeparator()
 
-        otherMenu = menu.addMenu("&Other")
-        for menuAction in self.otherActions:
-            otherMenu.addAction(menuAction)
-            otherMenu.addSeparator()
+        spectrumMenu = menu.addMenu("&Spectrum")
+        for menuAction in self.spectrumActions:
+            spectrumMenu.addAction(menuAction)
+            spectrumMenu.addSeparator()
 
     def _createStatusBar(self):
         """Create status bar"""
@@ -179,7 +180,7 @@ class MainWindow(QMainWindow):
             return
 
         # load spectrum
-        self.spectrum = Spectrum(self.image, lowerLimit, upperLimit)
+        self.spectrum = Spectrum.from_image(self.image, lowerLimit, upperLimit)
 
         # disable extract spectrum options
         for menuAction in self.extractSpectrumActions:
@@ -188,8 +189,8 @@ class MainWindow(QMainWindow):
                 menuAction.setChecked(False)
 
         # enable spectrum options
-        #for menuAction in self.spectrumActions:
-        #    menuAction.setEnabled(True)
+        for menuAction in self.spectrumActions:
+            menuAction.setEnabled(True)
 
         # plot spectrum
         self.spectrumView = SpectrumView(self.spectrum)
@@ -208,23 +209,52 @@ class MainWindow(QMainWindow):
             self,
             "Open File",
             "${HOME}",
-            "Fits Files (*fits *.fits *.fits.gz);; All files (*)",
+            "Fits Files (*fits *.fits *.fits.gz);; Data (*dat);; All files (*)",
         )
 
-        try:
-            # load image
-            self.image = Image(filename)
+        # figure out whether to open an Image or a Spectrum
+        file_type = getFileType(filename)
 
-            # plot image
-            self.imageView = ImageView(self.image)
-            self.setCentralWidget(self.imageView)
+        # Unkonw extension, report message in the status bar
+        if file_type is None:
+            message = "Unrecognized file extension"
+            self.statusBar().showMessage(message)
 
-            # enable extract spectrum options
-            for action in self.extractSpectrumActions:
-                action.setEnabled(True)
+        # open Image
+        elif file_type == "Image":
+            try:
+                # load image
+                self.image = Image(filename)
 
-        except ImageError as error:
-            self.statusBar().showMessage(str(error))
+                # plot image
+                self.imageView = ImageView(self.image)
+                self.setCentralWidget(self.imageView)
+
+                # enable extract spectrum options
+                for action in self.extractSpectrumActions:
+                    action.setEnabled(True)
+
+            except ImageError as error:
+                self.statusBar().showMessage(str(error))
+
+        # open Spectrum
+        elif file_type == "Spectrum":
+            try:
+                # load spectrum
+                self.spectrum = Spectrum.from_file(filename)
+
+                # plot spectrum
+                self.spectrumView = SpectrumView(self.spectrum)
+                self.setCentralWidget(self.spectrumView)
+
+                # enable spectrum options
+                for menuAction in self.spectrumActions:
+                    menuAction.setEnabled(True)
+
+            except SpectrumError as error:
+                self.statusBar().showMessage(str(error))
+
+
 
     def rotateImage(self):
         """ Rotate image.
@@ -240,3 +270,17 @@ class MainWindow(QMainWindow):
             except ImageError as error:
                 self.statusBar().showMessage(str(error))
             self.imageView.setImage(self.image)
+
+    def saveSpectrum(self):
+        """ Save spectrum"""
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            'Save File',
+            self.spectrum.name,
+            "Data (*dat)")
+
+        self.spectrum.name = filename
+        try:
+            self.spectrum.save()
+        except SpectrumError as error:
+            self.statusBar().showMessage(str(error))

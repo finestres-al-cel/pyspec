@@ -7,3 +7,8 @@ class ImageError(Exception):
     """
         Exceptions occurred in class Image
     """
+
+class SpectrumError(Exception):
+    """
+        Exceptions occurred in class Spectrum
+    """

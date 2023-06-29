@@ -4,7 +4,7 @@ from scipy.ndimage import rotate
 
 from pyspec.errors import ImageError
 
-ACCEPTED_FORMATS = ["fit", "fits", "fits.gz"]
+ACCEPTED_FORMATS = [".fit", ".fits", ".fits.gz"]
 
 class Image:
     """ Basic Image

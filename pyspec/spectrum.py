@@ -1,7 +1,9 @@
 """ Basic Spectrum """
 import numpy as np
 
-ACCEPTED_FORMATS = ["fit", "fits", "fits.gz"]
+from pyspec.errors import SpectrumError
+
+ACCEPTED_FORMATS = [".dat"]
 
 class Spectrum:
     """ Basic Spectrum
@@ -21,8 +23,28 @@ class Spectrum:
     name: str
     Name of the file
     """
-    def __init__(self, image, lower_limit, upper_limit):
+    def __init__(self, flux, wavelength, name):
         """Initialize instance
+
+        Arguments
+        ---------
+        flux: array of float
+        The spectrum flux
+
+        wavelength: array of float or None
+        The spectum wavelength. None it it's not calibrated
+
+        name: str
+        Name of the spectrum. E.g. name of the loaded file or suggested name
+        for the saving file
+        """
+        self.name = name
+        self.flux = flux
+        self.wavelength = wavelength
+
+    @classmethod
+    def from_image(cls, image, lower_limit, upper_limit):
+        """Create a Spectrum from an Image
 
         Arguments
         ---------
@@ -35,11 +57,66 @@ class Spectrum:
         upper_limit: int
         Upper limit of the extraction region. Must be smaller than lower_limit
 
+        Return
+        ------
+        spectrum: Spectrum
+        The initialized spectrum
+        """
+        name = image.filename.replace(
+            image.image_extension, "_extracted.dat")
+        flux = np.mean(image.data[lower_limit: upper_limit, :], axis=0)
+        wavelength = None
+
+        return cls(flux, wavelength, name)
+
+    @classmethod
+    def from_file(cls, filename):
+        """Load a Spectrum from file
+
+        Arguments
+        ---------
+        filename: str
+        The name of the file
+
+        Return
+        ------
+        spectrum: Spectrum
+        The initialized spectrum
+        """
+        data = np.genfromtxt(filename, names=True)
+
+        flux = data["flux"]
+        if "wavelength[Angstroms]" in data.dtype.names:
+            wavelength = data["wavelength[Angstroms]"]
+        else:
+            wavelength = None
+
+        return cls(flux, wavelength, filename)
+
+    def save(self):
+        """Save spectrum
+
         Raise
         -----
+        SpectrumError if the filename does not have the correct format
         """
-        self.name = image.filename.replace(
-            image.image_extension, "_extracted.dat")
+        # check filename extension
+        extension = None
+        for format in ACCEPTED_FORMATS:
+            if filename.endswith(format):
+                extension = format
+        if extension is None:
+            raise SpectrumError(
+                f"Spectrum: 'filename' has incorrect extension. Valid"
+                "extensions are " + ", ".join(ACCEPTED_FORMATS)
+                )
 
-        self.flux = np.mean(image.data[lower_limit: upper_limit, :], axis=0)
-        self.wavelength = None
+        with open(self.name, "w") as file:
+            if self.wavelength is None:
+                file.write("# flux\n")
+                for flux in self.flux:
+                    file.write(f"{flux}\n")
+            else:
+                file.write("# wavelength[Angstroms] flux\n")
+                for flux, wavelength in zip(self.flux, self.wavelength):
+                    file.write(f"{wavelength} {flux}\n")
