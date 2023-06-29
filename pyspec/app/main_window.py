@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QStatusBar,
     QToolBar,
 )
-import pyqtgraph as pg
 
 from pyspec.app.environment import WIDTH, HEIGHT, ICON_SIZE
 from pyspec.app.load_actions import (
@@ -19,6 +18,7 @@ from pyspec.app.load_actions import (
     loadSpectralExtractionActions,
     loadOtherActions
 )
+from pyspec.app.image_view import ImageView
 from pyspec.app.rotate_image_dialog import RotateImageDialog
 from pyspec.errors import ImageError
 from pyspec.image import Image
@@ -66,6 +66,7 @@ class MainWindow(QMainWindow):
         self._createMenuBar()
 
         self.image = None
+        self.imageView = None
 
     def _createToolBar(self):
         """Create tool bars"""
@@ -113,6 +114,38 @@ class MainWindow(QMainWindow):
         """Create status bar"""
         self.setStatusBar(QStatusBar(self))
 
+    def activateChooseLimitOnClick(self, checked, sender):
+        """Activate/deactivate choose limits on click.
+
+        If the sender is now active, then deactivate all other actions in the
+        Extract Spectrum menu.
+
+
+        Arguments
+        ---------
+        checked: boolean
+        True if the sender is now checked. False otherwise.
+
+        sender: QAction
+        Qaction starting the function. Must be one of the Extract Spectrum
+        menu
+        """
+        if checked:
+            # uncheck the other actions
+            for menuAction in self.extractSpectrumActions:
+                if (menuAction != sender and menuAction.isCheckable()
+                    and menuAction.isChecked()):
+                    menuAction.setChecked(False)
+
+            # activate set limit on clicking
+            message = self.imageView.activateChooseLimitOnClick(sender)
+
+        else:
+            # de activate set limit on clicking
+            message = self.imageView.deactivateChooseLimitOnClick()
+
+        self.statusBar().showMessage(message)
+
     def onMyToolBarButtonClick(self, s):
         print("click", s)
 
@@ -131,10 +164,8 @@ class MainWindow(QMainWindow):
             self.image = Image(filename)
 
             # plot image
-            self.graphWidget = pg.ImageView()
-            self.graphWidget.show()
-            self.graphWidget.setImage(self.image.data)
-            self.setCentralWidget(self.graphWidget)
+            self.imageView = ImageView(self.image)
+            self.setCentralWidget(self.imageView)
 
             # enable extract spectrum options
             for action in self.extractSpectrumActions:
@@ -156,4 +187,4 @@ class MainWindow(QMainWindow):
                 self.image.rotate(rotateImgageDialog.rotateAngleQuestion.text())
             except ImageError as error:
                 self.statusBar().showMessage(str(error))
-            self.graphWidget.setImage(self.image.data)
+            self.imageView.setImage(self.image)

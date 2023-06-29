@@ -67,7 +67,9 @@ def loadSpectralExtractionActions(window):
         "Set &Bottom Limit",
         window)
     set_bottom_limit_option.setStatusTip("Set Bottom Limit")
-    set_bottom_limit_option.triggered.connect(window.onMyToolBarButtonClick)
+    set_bottom_limit_option.triggered.connect(
+        lambda checked: window.activateChooseLimitOnClick(
+            checked, set_bottom_limit_option))
     set_bottom_limit_option.setCheckable(True)
     set_bottom_limit_option.setEnabled(False)
     menuActions.append(set_bottom_limit_option)
@@ -77,7 +79,9 @@ def loadSpectralExtractionActions(window):
         "Set &Top Limit",
         window)
     set_top_limit_option.setStatusTip("Set Upper Limit")
-    set_top_limit_option.triggered.connect(window.onMyToolBarButtonClick)
+    set_top_limit_option.triggered.connect(
+        lambda checked: window.activateChooseLimitOnClick(
+            checked, set_top_limit_option))
     set_top_limit_option.setCheckable(True)
     set_top_limit_option.setEnabled(False)
     menuActions.append(set_top_limit_option)
