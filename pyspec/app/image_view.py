@@ -117,6 +117,8 @@ class ImageView(pg.PlotWidget):
                 self.lowerLimit = view_pos.y()
 
             self.updatePlot()
+        else:
+            super().mousePressEvent(event)
 
     def setImage(self, image):
         self.imageData = image.data
