@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QStatusBar,
     QToolBar,
+    QMessageBox,
 )
 
 from pyspec.app.environment import WIDTH, HEIGHT, ICON_SIZE
@@ -20,8 +21,10 @@ from pyspec.app.load_actions import (
 )
 from pyspec.app.image_view import ImageView
 from pyspec.app.rotate_image_dialog import RotateImageDialog
+from pyspec.app.spectrum_view import SpectrumView
 from pyspec.errors import ImageError
 from pyspec.image import Image
+from pyspec.spectrum import Spectrum
 
 
 class MainWindow(QMainWindow):
@@ -146,8 +149,54 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(message)
 
+    @pyqtSlot()
     def extractSpectrum(self):
-        return
+        """Extract the spectrum"""
+        upperLimit = self.imageView.upperLimit
+        lowerLimit = self.imageView.lowerLimit
+
+        # check errors
+        if upperLimit is None:
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle("Extraction error")
+            dlg.setText("Upper limit is not set")
+            button = dlg.exec()
+            return
+        if lowerLimit is None:
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle("Extraction error")
+            dlg.setText("Lower limit is not set")
+            button = dlg.exec()
+            return
+        if lowerLimit >= upperLimit:
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle("Extraction error")
+            dlg.setText(
+                "Lower limit is higher than  or equal to the upper limit\n"
+                f"Lower limit: {lowerLimit}\n"
+                f"Upper limit: {upperLimit}\n")
+            button = dlg.exec()
+            return
+
+        # load spectrum
+        self.spectrum = Spectrum(self.image, lowerLimit, upperLimit)
+
+        # disable extract spectrum options
+        for menuAction in self.extractSpectrumActions:
+            menuAction.setEnabled(False)
+            if menuAction.isCheckable():
+                menuAction.setChecked(False)
+
+        # enable spectrum options
+        #for menuAction in self.spectrumActions:
+        #    menuAction.setEnabled(True)
+
+        # plot spectrum
+        self.spectrumView = SpectrumView(self.spectrum)
+        self.setCentralWidget(self.spectrumView)
+
+        # close image
+        self.imageView.close()
 
     def onMyToolBarButtonClick(self, s):
         print("click", s)

@@ -1,4 +1,4 @@
-"""Define ImageView widget as an extension of pg.ImageView"""
+"""Define ImageView widget as an extension of pg.PlotWidget"""
 import numpy as np
 
 from PyQt6.QtCore import Qt
@@ -11,7 +11,7 @@ class ImageView(pg.PlotWidget):
 
     Methods
     -------
-    (see pg.ImageView)
+    (see pg.PlotWidget)
     __init__
     activateChooseLimitOnClick
     deactivateChooseLimitOnClick
@@ -22,7 +22,7 @@ class ImageView(pg.PlotWidget):
 
     Attributes
     ----------
-    (see pg.ImageView)
+    (see pg.PlotWidget)
 
     chooseLimit: str or None
     String that specifies which limit is being set ("upper" or "lower"). None for
@@ -56,9 +56,6 @@ class ImageView(pg.PlotWidget):
         self.lowerLimit = None
         self.upperLimit = None
 
-        # load plot settings
-        self.setPlot()
-
         # plot image
         self.imageItem = None
         self.lowerLimitItem = None
@@ -78,9 +75,9 @@ class ImageView(pg.PlotWidget):
         statusMessage: str
         Status message with the chosen limit
         """
-        if "bottom" in menuAction.text().lower():
+        if "upper" in menuAction.text().lower():
             self.chooseLimit = "upper"
-        if "top" in menuAction.text().lower():
+        if "lower" in menuAction.text().lower():
             self.chooseLimit = "lower"
 
         statusMessage = f"Setting {self.chooseLimit} limit"
@@ -113,9 +110,9 @@ class ImageView(pg.PlotWidget):
             print("Clicked at x={}, y={}".format(view_pos.x(), view_pos.y()))
 
             if self.chooseLimit == "upper":
-                self.upperLimit = view_pos.y()
+                self.upperLimit = int(view_pos.y())
             elif self.chooseLimit == "lower":
-                self.lowerLimit = view_pos.y()
+                self.lowerLimit = int(view_pos.y())
 
             self.updatePlot()
         else:
@@ -145,8 +142,11 @@ class ImageView(pg.PlotWidget):
         # reset plot
         self.clear()
 
+        # load plot settings
+        self.setPlot()
+
         # plot image
-        self.imageItem = pg.ImageItem(self.imageData)
+        self.imageItem = pg.ImageItem(self.imageData.transpose())
         self.addItem(self.imageItem)
 
         # plot lower limit if active

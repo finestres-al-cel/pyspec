@@ -12,6 +12,7 @@ class Image:
     Methods
     -------
     __init__
+    rotate
 
     Attributes
     ----------
@@ -24,8 +25,14 @@ class Image:
     header: astropy.io.fits.header.Header
     The image header
 
+    image_extension: str
+    Extension of the loaded file
+
     original_data: array of float
     The original image data
+
+    rotation_angle: float
+    Current rotation angle. This is the sum of all rotation angles applied
     """
     def __init__(self, filename):
         """Initialize instance
@@ -47,11 +54,11 @@ class Image:
                 f"found {type(filename)}. {filename}")
 
         # check filename extension
-        format_ok = False
+        self.image_extension = None
         for format in ACCEPTED_FORMATS:
             if filename.endswith(format):
-                format_ok = True
-        if not format_ok:
+                self.image_extension = format
+        if self.image_extension is None:
             raise ImageError(
                 f"Image: 'filename' has incorrect extension. Valid"
                 "extensions are " + ", ".join(ACCEPTED_FORMATS)

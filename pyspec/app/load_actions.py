@@ -62,29 +62,29 @@ def loadSpectralExtractionActions(window):
     rotate_image_option.setEnabled(False)
     menuActions.append(rotate_image_option)
 
-    set_bottom_limit_option = QAction(
+    set_upper_limit_option = QAction(
         QIcon(f"{BUTTONS_PATH}/extract_spectrum.jpg"),
-        "Set &Bottom Limit",
+        "Set &Upper Limit",
         window)
-    set_bottom_limit_option.setStatusTip("Set Bottom Limit")
-    set_bottom_limit_option.triggered.connect(
+    set_upper_limit_option.setStatusTip("Set Upper Limit")
+    set_upper_limit_option.triggered.connect(
         lambda checked: window.activateChooseLimitOnClick(
-            checked, set_bottom_limit_option))
-    set_bottom_limit_option.setCheckable(True)
-    set_bottom_limit_option.setEnabled(False)
-    menuActions.append(set_bottom_limit_option)
+            checked, set_upper_limit_option))
+    set_upper_limit_option.setCheckable(True)
+    set_upper_limit_option.setEnabled(False)
+    menuActions.append(set_upper_limit_option)
 
-    set_top_limit_option = QAction(
+    set_lower_limit_option = QAction(
         QIcon(f"{BUTTONS_PATH}/extract_spectrum.jpg"),
-        "Set &Top Limit",
+        "Set &Lower Limit",
         window)
-    set_top_limit_option.setStatusTip("Set Upper Limit")
-    set_top_limit_option.triggered.connect(
+    set_lower_limit_option.setStatusTip("Set Lower Limit")
+    set_lower_limit_option.triggered.connect(
         lambda checked: window.activateChooseLimitOnClick(
-            checked, set_top_limit_option))
-    set_top_limit_option.setCheckable(True)
-    set_top_limit_option.setEnabled(False)
-    menuActions.append(set_top_limit_option)
+            checked, set_lower_limit_option))
+    set_lower_limit_option.setCheckable(True)
+    set_lower_limit_option.setEnabled(False)
+    menuActions.append(set_lower_limit_option)
 
     return menuActions
 
