@@ -82,14 +82,23 @@ class Spectrum:
         ------
         spectrum: Spectrum
         The initialized spectrum
+
+        Raise
+        -----
+        SpectrumError if the file content was not correct
         """
         data = np.genfromtxt(filename, names=True)
 
-        flux = data["flux"]
-        if "wavelength[Angstroms]" in data.dtype.names:
-            wavelength = data["wavelength[Angstroms]"]
-        else:
-            wavelength = None
+        try:
+            flux = data["flux"]
+            if "wavelength[Angstroms]" in data.dtype.names:
+                wavelength = data["wavelength[Angstroms]"]
+            else:
+                wavelength = None
+        except ValueError as error:
+            raise SpectrumError(
+                f"Spectrum: 'filename' has incorrect content: {str(error)}"
+                ) from error
 
         return cls(flux, wavelength, filename)
 
