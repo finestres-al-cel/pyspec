@@ -117,10 +117,21 @@ def loadSpectrumActions(window):
         "&Set Calibration",
         window)
     set_calibration_option.setStatusTip("Set Calibration")
-    set_calibration_option.triggered.connect(window.onMyToolBarButtonClick)
+    set_calibration_option.triggered.connect(
+        lambda checked: window.activateSetCalibration(
+            checked, set_calibration_option))
     set_calibration_option.setCheckable(True)
     set_calibration_option.setEnabled(False)
     menuActions.append(set_calibration_option)
+
+    show_calibration_points = QAction(
+        QIcon(f"{BUTTONS_PATH}/set_calib.png"),
+        "&Show Calibration Points",
+        window)
+    show_calibration_points.setStatusTip("Show Calibration Points")
+    show_calibration_points.triggered.connect(window.showCalibrationPoints)
+    show_calibration_points.setEnabled(False)
+    menuActions.append(show_calibration_points)
 
     load_calibration_option = QAction(
         QIcon(f"{BUTTONS_PATH}/load_calib.png"),

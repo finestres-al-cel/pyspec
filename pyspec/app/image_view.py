@@ -105,14 +105,13 @@ class ImageView(pg.PlotWidget):
         """
         if event.button() == Qt.MouseButton.LeftButton and self.chooseLimit is not None:
             pos = event.pos()
-            scene_pos = self.mapToScene(pos)
-            view_pos = self.getViewBox().mapSceneToView(scene_pos)
-            print("Clicked at x={}, y={}".format(view_pos.x(), view_pos.y()))
+            scenePos = self.mapToScene(pos)
+            viewPos = self.getViewBox().mapSceneToView(scenePos)
 
             if self.chooseLimit == "upper":
-                self.upperLimit = int(view_pos.y())
+                self.upperLimit = int(viewPos.y())
             elif self.chooseLimit == "lower":
-                self.lowerLimit = int(view_pos.y())
+                self.lowerLimit = int(viewPos.y())
 
             self.updatePlot()
         else:

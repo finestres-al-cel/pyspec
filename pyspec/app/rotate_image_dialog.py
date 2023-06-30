@@ -5,11 +5,18 @@ class RotateImageDialog(QDialog):
 
     Methods
     -------
+    (see QDialog)
     __init__
 
     Arguments
     ---------
+    (see QDialog)
 
+    buttonBox: QDialogButtonBox
+    Accept/cancel button
+
+    rotateAngleQuestion: QLineEdit
+    Field to input the rotation angle
     """
     def __init__(self):
         """Initialize instance"""
@@ -27,7 +34,7 @@ class RotateImageDialog(QDialog):
         self.rotateAngleQuestion.setMaxLength(10)
         self.rotateAngleQuestion.setPlaceholderText("Enter rotation angle")
 
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.rotateAngleQuestion)
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
+        layout = QVBoxLayout()
+        layout.addWidget(self.rotateAngleQuestion)
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)

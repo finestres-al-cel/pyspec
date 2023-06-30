@@ -42,6 +42,31 @@ class Spectrum:
         self.flux = flux
         self.wavelength = wavelength
 
+    def findLocalMax(self, x_pos):
+        """Find the local maximum.
+
+        This function assumes that you are giving a position close to a peak
+        maximum and corrects it if necessary
+
+        Arguments
+        ---------
+        x_pos: int
+        Initial guess
+
+        Returns
+        -------
+        x_pos: int
+        The position of the peak
+        """
+        while True:
+            if x_pos > 0 and self.flux[x_pos - 1] > self.flux[x_pos]:
+                x_pos -= 1
+            elif x_pos < self.flux.size - 1 and self.flux[x_pos + 1] > self.flux[x_pos]:
+                x_pos += 1
+            else:
+                return x_pos
+
+
     @classmethod
     def from_image(cls, image, lower_limit, upper_limit):
         """Create a Spectrum from an Image

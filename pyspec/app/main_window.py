@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
 
     Methods
     -------
+    (see QMainWindow)
     __init__
     _createToolBar
     _createMenuBar
@@ -41,6 +42,8 @@ class MainWindow(QMainWindow):
 
     Attributes
     ----------
+    (see QMainWindow)
+
     centralWidget: QtWidget
     Central widget
 
@@ -150,6 +153,37 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(message)
 
+    def activateSetCalibration(self, checked, sender):
+        """Activate/deactivate set calibration.
+
+        If the sender is now active, then deactivate all other actions in the
+        Spectrum menu.
+
+        Arguments
+        ---------
+        checked: boolean
+        True if the sender is now checked. False otherwise.
+
+        sender: QAction
+        Qaction starting the function. Must be one of the Extract Spectrum
+        menu
+        """
+        if checked:
+            # uncheck the other actions
+            for menuAction in self.spectrumActions:
+                if (menuAction != sender and menuAction.isCheckable()
+                    and menuAction.isChecked()):
+                    menuAction.setChecked(False)
+
+            # activate set limit on clicking
+            message = self.spectrumView.activateSetCalibrationPoints()
+
+        else:
+            # de activate set limit on clicking
+            message = self.spectrumView.deactivateSetCalibrationPoints()
+
+        self.statusBar().showMessage(message)
+
     @pyqtSlot()
     def extractSpectrum(self):
         """Extract the spectrum"""
@@ -254,15 +288,12 @@ class MainWindow(QMainWindow):
             except SpectrumError as error:
                 self.statusBar().showMessage(str(error))
 
-
-
     def rotateImage(self):
         """ Rotate image.
 
         Asks the user for the rotation angle and stores the result
         Then, rotate the image and update the plot
         """
-
         rotateImgageDialog = RotateImageDialog()
         if rotateImgageDialog.exec():
             try:
@@ -284,3 +315,10 @@ class MainWindow(QMainWindow):
             self.spectrum.save()
         except SpectrumError as error:
             self.statusBar().showMessage(str(error))
+
+    def showCalibrationPoints(self):
+        """ Show current calibration points
+
+        Optionally modify them
+        """
+        self.spectrumView.showCalibrationPoints()
