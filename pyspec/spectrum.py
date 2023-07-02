@@ -8,9 +8,16 @@ ACCEPTED_FORMATS = [".dat"]
 class Spectrum:
     """ Basic Spectrum
 
+    Class methods
+    -------------
+    from_image
+    from_file
+
     Methods
     -------
     __init__
+    find_local_max
+    save
 
     Attributes
     ----------
@@ -42,7 +49,7 @@ class Spectrum:
         self.flux = flux
         self.wavelength = wavelength
 
-    def findLocalMax(self, x_pos):
+    def find_local_max(self, x_pos):
         """Find the local maximum.
 
         This function assumes that you are giving a position close to a peak
@@ -136,16 +143,16 @@ class Spectrum:
         """
         # check filename extension
         extension = None
-        for format in ACCEPTED_FORMATS:
-            if filename.endswith(format):
-                extension = format
+        for format_check in ACCEPTED_FORMATS:
+            if self.name.endswith(format_check):
+                extension = format_check
         if extension is None:
             raise SpectrumError(
-                f"Spectrum: 'filename' has incorrect extension. Valid"
+                "Spectrum: 'name' has incorrect extension. Valid"
                 "extensions are " + ", ".join(ACCEPTED_FORMATS)
                 )
 
-        with open(self.name, "w") as file:
+        with open(self.name, "w", encoding="UTF-8") as file:
             if self.wavelength is None:
                 file.write("# flux\n")
                 for flux in self.flux:

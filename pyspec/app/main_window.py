@@ -14,16 +14,19 @@ from PyQt6.QtWidgets import (
 )
 
 from pyspec.app.environment import WIDTH, HEIGHT, ICON_SIZE
+from pyspec.app.error_dialog import ErrorDialog
+from pyspec.app.image_view import ImageView
 from pyspec.app.load_actions import (
     loadFileMenuActions,
     loadSpectralExtractionActions,
     loadSpectrumActions
 )
-from pyspec.app.image_view import ImageView
 from pyspec.app.rotate_image_dialog import RotateImageDialog
 from pyspec.app.spectrum_view import SpectrumView
+from pyspec.app.success_dialog import SuccessDialog
 from pyspec.app.utils import getFileType
-from pyspec.errors import ImageError, SpectrumError
+from pyspec.errors import CalibrationError, ImageError, SpectrumError
+from pyspec.calibration import Calibration
 from pyspec.image import Image
 from pyspec.spectrum import Spectrum
 
@@ -74,6 +77,9 @@ class MainWindow(QMainWindow):
 
         self.image = None
         self.imageView = None
+        self.spectrum = None
+        self.spectrumView = None
+        self.calibration = None
 
     def _createToolBar(self):
         """Create tool bars"""
@@ -184,6 +190,17 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(message)
 
+    def calibrate(self):
+        """Calibrate spectrum"""
+        self.spectrum.wavelength = self.calibration.calibrate(
+            self.spectrum.flux.size)
+
+        print(self.spectrum.wavelength)
+        self.spectrumView.setSpectrum(self.spectrum)
+
+        successDialog = SuccessDialog("Calibration success")
+        successDialog.exec()
+
     @pyqtSlot()
     def extractSpectrum(self):
         """Extract the spectrum"""
@@ -233,8 +250,22 @@ class MainWindow(QMainWindow):
         # close image
         self.imageView.close()
 
-    def onMyToolBarButtonClick(self, s):
-        print("click", s)
+    @pyqtSlot()
+    def loadCalibration(self):
+        """Load calibration"""
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open File",
+            "${HOME}",
+            "Data (*dat);; All files (*)",
+        )
+
+        try:
+            self.calibration = Calibration.from_file(filename)
+        except CalibrationError as error:
+            errorDialog = ErrorDialog(
+                "An error occurred when loading the calibration:\n" + str(error))
+            errorDialog.exec()
 
     @pyqtSlot()
     def openFile(self):
@@ -243,7 +274,7 @@ class MainWindow(QMainWindow):
             self,
             "Open File",
             "${HOME}",
-            "Fits Files (*fits *.fits *.fits.gz);; Data (*dat);; All files (*)",
+            "Fits Files (*fit *.fits *.fits.gz);; Data (*dat);; All files (*)",
         )
 
         # figure out whether to open an Image or a Spectrum
@@ -269,7 +300,9 @@ class MainWindow(QMainWindow):
                     action.setEnabled(True)
 
             except ImageError as error:
-                self.statusBar().showMessage(str(error))
+                errorDialog = ErrorDialog(
+                    "An error occurred when opening an image:\n" + str(error))
+                errorDialog.exec()
 
         # open Spectrum
         elif file_type == "Spectrum":
@@ -286,7 +319,9 @@ class MainWindow(QMainWindow):
                     menuAction.setEnabled(True)
 
             except SpectrumError as error:
-                self.statusBar().showMessage(str(error))
+                errorDialog = ErrorDialog(
+                    "An error occurred when opening a spectrum:\n" + str(error))
+                errorDialog.exec()
 
     def rotateImage(self):
         """ Rotate image.
@@ -299,8 +334,33 @@ class MainWindow(QMainWindow):
             try:
                 self.image.rotate(rotateImgageDialog.rotateAngleQuestion.text())
             except ImageError as error:
-                self.statusBar().showMessage(str(error))
+                errorDialog = ErrorDialog(
+                    "An error occurred when rotating the image:\n" + str(error))
+                errorDialog.exec()
             self.imageView.setImage(self.image)
+
+    def saveCalibration(self):
+        """ Save calibration"""
+        if self.calibration is None:
+            errorDialog = ErrorDialog(
+                "Set calibration before saving it")
+            errorDialog.exec()
+            return
+
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save File",
+            "calibration.dat",
+            "Data (*dat);; All (*)")
+
+        if filename = "":
+            return
+        try:
+            self.calibration.save(filename)
+        except CalibrationError as error:
+            errorDialog = ErrorDialog(
+                "An error occurred when saving the calibration:\n" + str(error))
+            errorDialog.exec()
 
     def saveSpectrum(self):
         """ Save spectrum"""
@@ -310,11 +370,32 @@ class MainWindow(QMainWindow):
             self.spectrum.name,
             "Data (*dat)")
 
+        if filename = "":
+            return
         self.spectrum.name = filename
         try:
             self.spectrum.save()
         except SpectrumError as error:
-            self.statusBar().showMessage(str(error))
+            errorDialog = ErrorDialog(
+                "An error occurred when saving the spectrum:\n" + str(error))
+            errorDialog.exec()
+
+    def setCalibration(self):
+        """Find the calibration solution"""
+        # uncheck the other actions
+        for menuAction in self.spectrumActions:
+            if menuAction.isCheckable() and menuAction.isChecked():
+                menuAction.setChecked(False)
+
+        try:
+            self.calibration = Calibration.from_points(
+                self.spectrumView.calibrationPoints)
+            successDialog = SuccessDialog("Calibration is set")
+            successDialog.exec()
+        except CalibrationError as error:
+            errorDialog = ErrorDialog(
+                "An error occurred whe setting the calibration:\n" + str(error))
+            errorDialog.exec()
 
     def showCalibrationPoints(self):
         """ Show current calibration points

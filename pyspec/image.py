@@ -55,19 +55,19 @@ class Image:
 
         # check filename extension
         self.image_extension = None
-        for format in ACCEPTED_FORMATS:
-            if filename.endswith(format):
-                self.image_extension = format
+        for format_check in ACCEPTED_FORMATS:
+            if filename.endswith(format_check):
+                self.image_extension = format_check
         if self.image_extension is None:
             raise ImageError(
-                f"Image: 'filename' has incorrect extension. Valid"
+                "Image: 'filename' has incorrect extension. Valid"
                 "extensions are " + ", ".join(ACCEPTED_FORMATS)
                 )
 
         try:
             hdu = fits.open(filename)
         except IOError as error:
-            raise SpectrumFileError(my_name, str(error)) from error
+            raise ImageError("Image:", str(error)) from error
 
         self.filename = filename
         self.header = hdu[0].header

@@ -1,3 +1,4 @@
+""" Dialog to add calibration points"""
 from PyQt6.QtWidgets import (
     QDialog, QDialogButtonBox, QGridLayout, QLabel, QLineEdit
 )

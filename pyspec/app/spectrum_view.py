@@ -27,16 +27,18 @@ class SpectrumView(pg.PlotWidget):
     ----------
     (see pg.PlotWidget)
 
-    chooseLimit: str or None
-    String that specifies which limit is being set ("upper" or "lower"). None for
-    no limit. If any limit is set, then mouse clicks on the image will store
-    the y position of the click
+    spectrum: Spectrum
+    The spectrum to be plotted
 
-    lowerLimit: int or None
-    Lower limit of the area to be considered in the extraction of a spectrum
+    spectrumItem: pg.PlotCurveItem
+    Plot item for the spectrum
 
-    upperLimit: int or None
-    Upper limit of the area to be considered in the extraction of a spectrum
+    calibrationPoints: dict
+    Dictionary with the calibration points. Keys are the position in pixels and
+    values are the wavelengths
+
+    calibrationPointsItem: pg.ScatterPlotItem
+    Plot item for calibrationPoints
     """
     def __init__(self, spectrum):
         """Initialize instance
@@ -85,7 +87,7 @@ class SpectrumView(pg.PlotWidget):
 
     def addCalibrationPoint(self, viewPos):
         """Add calibration point"""
-        xPos = self.spectrum.findLocalMax(int(viewPos.x()))
+        xPos = self.spectrum.find_local_max(int(viewPos.x()))
 
         addCalibrationPointDialog = AddCalibrationPointDialog(xPos)
 
@@ -144,18 +146,25 @@ class SpectrumView(pg.PlotWidget):
 
     def setPlot(self):
         """Load plot settings"""
-
         self.setLabel(axis='left', text='Flux')
         if self.spectrum.wavelength is None:
             self.setLabel(axis='bottom', text='X-pixel')
         else:
             self.setLabel(axis='bottom', text='Wavelength [Angs]')
 
-    def showCalibrationPoints(self):
-        """ Show current calibration points
+    def setSpectrum(self, spectrum):
+        """Set spectrum and update plot accordingly
 
-        Optionally modify them
+        Arguments
+        ---------
+        image: Image
+        The new image
         """
+        self.spectrum = spectrum
+        self.updatePlot()
+
+    def showCalibrationPoints(self):
+        """Show current calibration points. Optionally modify them"""
         calibrationPointListDialog = CalibrationPointListDialog(
             self.calibrationPoints)
         if calibrationPointListDialog.exec():
@@ -165,7 +174,6 @@ class SpectrumView(pg.PlotWidget):
                 if not item[2]
             }
             self.updatePlot()
-
 
     def updatePlot(self):
         """Update plot"""

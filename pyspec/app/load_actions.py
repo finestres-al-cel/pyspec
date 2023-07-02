@@ -113,10 +113,10 @@ def loadSpectrumActions(window):
     menuActions.append(save_spectrum_option)
 
     set_calibration_option = QAction(
-        QIcon(f"{BUTTONS_PATH}/set_calib.png"),
-        "&Set Calibration",
+        QIcon(f"{BUTTONS_PATH}/set_calib_points.png"),
+        "&Set Calibration Points",
         window)
-    set_calibration_option.setStatusTip("Set Calibration")
+    set_calibration_option.setStatusTip("Set Calibration Points")
     set_calibration_option.triggered.connect(
         lambda checked: window.activateSetCalibration(
             checked, set_calibration_option))
@@ -125,7 +125,7 @@ def loadSpectrumActions(window):
     menuActions.append(set_calibration_option)
 
     show_calibration_points = QAction(
-        QIcon(f"{BUTTONS_PATH}/set_calib.png"),
+        QIcon(f"{BUTTONS_PATH}/show_calib_points.png"),
         "&Show Calibration Points",
         window)
     show_calibration_points.setStatusTip("Show Calibration Points")
@@ -133,14 +133,40 @@ def loadSpectrumActions(window):
     show_calibration_points.setEnabled(False)
     menuActions.append(show_calibration_points)
 
+    compute_calibration = QAction(
+        QIcon(f"{BUTTONS_PATH}/set_calib.png"),
+        "&Set Calibration",
+        window)
+    compute_calibration.setStatusTip("Set Calibration")
+    compute_calibration.triggered.connect(window.setCalibration)
+    compute_calibration.setEnabled(False)
+    menuActions.append(compute_calibration)
+
+    save_calibration = QAction(
+        QIcon(f"{BUTTONS_PATH}/save_calib.png"),
+        "&Save Calibration",
+        window)
+    save_calibration.setStatusTip("Save Calibration")
+    save_calibration.triggered.connect(window.saveCalibration)
+    save_calibration.setEnabled(False)
+    menuActions.append(save_calibration)
+
     load_calibration_option = QAction(
         QIcon(f"{BUTTONS_PATH}/load_calib.png"),
         "&Load Calibration",
         window)
     load_calibration_option.setStatusTip("Load Calibration")
-    load_calibration_option.triggered.connect(window.onMyToolBarButtonClick)
-    load_calibration_option.setCheckable(True)
+    load_calibration_option.triggered.connect(window.loadCalibration)
     load_calibration_option.setEnabled(False)
     menuActions.append(load_calibration_option)
+
+    calibrate = QAction(
+        QIcon(f"{BUTTONS_PATH}/calibrate.png"),
+        "&Calibrate",
+        window)
+    calibrate.setStatusTip("Calibrate")
+    calibrate.triggered.connect(window.calibrate)
+    calibrate.setEnabled(False)
+    menuActions.append(calibrate)
 
     return menuActions

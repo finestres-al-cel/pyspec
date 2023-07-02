@@ -1,7 +1,10 @@
 """This module define the different Error types related to the
 package pyspec
 """
-
+class CalibrationError(Exception):
+    """
+        Exceptions occurred in class Image
+    """
 
 class ImageError(Exception):
     """

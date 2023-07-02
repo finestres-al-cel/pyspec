@@ -1,3 +1,5 @@
+"""Dialog to rotate an Image"""
+
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QLineEdit
 
 class RotateImageDialog(QDialog):
