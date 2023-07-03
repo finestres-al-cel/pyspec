@@ -40,6 +40,14 @@ class Calibration():
             raise CalibrationError(
                 "Compute Calibration: Error: too few points")
 
+        # check that the pairs of (x, wave) are properly ordered
+        for item1, item2 in zip(calibration_points[:-1], calibration_points[1:]):
+            if item1["x"] >= item2["x"] or item1["wave"] >= item2["wave"]:
+                raise CalibrationError(
+                    "Compute Calibration: Error: points are not properly sorted. "
+                    "Each point should have larger X and wavelength than the "
+                    "previous one")
+
         # compute the wavelength solution
         self.wave_solution = np.polynomial.Polynomial.fit(
             calibration_points["x"],

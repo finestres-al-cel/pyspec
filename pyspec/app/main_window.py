@@ -209,25 +209,21 @@ class MainWindow(QMainWindow):
 
         # check errors
         if upperLimit is None:
-            dlg = QMessageBox(self)
-            dlg.setWindowTitle("Extraction error")
-            dlg.setText("Upper limit is not set")
-            button = dlg.exec()
+            errorDialog = ErrorDialog(
+                "Extraction error: Upper limit is not set")
+            errorDialog.exec()
             return
         if lowerLimit is None:
-            dlg = QMessageBox(self)
-            dlg.setWindowTitle("Extraction error")
-            dlg.setText("Lower limit is not set")
-            button = dlg.exec()
+            errorDialog = ErrorDialog(
+                "Extraction error: Lower limit is not set")
+            errorDialog.exec()
             return
         if lowerLimit >= upperLimit:
-            dlg = QMessageBox(self)
-            dlg.setWindowTitle("Extraction error")
-            dlg.setText(
-                "Lower limit is higher than  or equal to the upper limit\n"
-                f"Lower limit: {lowerLimit}\n"
-                f"Upper limit: {upperLimit}\n")
-            button = dlg.exec()
+            errorDialog = ErrorDialog(
+                "Extraction error: Lower limit is higher than  or equal to the "
+                f"upper limit\n Lower limit: {lowerLimit}\n Upper limit: "
+                f"{upperLimit}\n")
+            errorDialog.exec()
             return
 
         # load spectrum
@@ -353,7 +349,7 @@ class MainWindow(QMainWindow):
             "calibration.dat",
             "Data (*dat);; All (*)")
 
-        if filename = "":
+        if filename == "":
             return
         try:
             self.calibration.save(filename)
@@ -370,7 +366,7 @@ class MainWindow(QMainWindow):
             self.spectrum.name,
             "Data (*dat)")
 
-        if filename = "":
+        if filename == "":
             return
         self.spectrum.name = filename
         try:

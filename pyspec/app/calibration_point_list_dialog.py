@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
 )
 
 from pyspec.app.add_calibration_point_dialog import AddCalibrationPointDialog
+from pyspec.app.error_dialog import ErrorDialog
 from pyspec.app.q_push_button_index import QPushButtonIndex
 
 class CalibrationPointListDialog(QDialog):
@@ -66,17 +67,14 @@ class CalibrationPointListDialog(QDialog):
                 if addCalibrationPointDialog.xPosQuestion.text() != "":
                     xPos = int(addCalibrationPointDialog.xPosQuestion.text())
             except ValueError as error:
-                self.statusBar().showMessage(
-                    "X position must be an integer"
-                )
-
+                errorDialog = ErrorDialog("X position must be an integer")
+                errorDialog.exec()
             try:
                 if addCalibrationPointDialog.wavelengthQuestion.text() != "":
                     wavelength = float(addCalibrationPointDialog.wavelengthQuestion.text())
             except ValueError as error:
-                self.statusBar().showMessage(
-                    "X position must be a float"
-                )
+                errorDialog = ErrorDialog("Wavelength must be a float")
+                errorDialog.exec()
 
             # update values
             self.calibrationPoints[index][0] = xPos
