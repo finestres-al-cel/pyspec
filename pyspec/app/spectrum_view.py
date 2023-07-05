@@ -58,6 +58,7 @@ class SpectrumView(pg.PlotWidget):
         # calibration points
         self.calibrationPoints = {}
         self.calibrationPointsItem = None
+        self.calibrated = False
 
         # mouse control
         self.setCalibrationPoints = False
@@ -196,7 +197,7 @@ class SpectrumView(pg.PlotWidget):
         self.addItem(self.spectrumItem)
 
         # plot calibration points
-        if len(self.calibrationPoints) > 0:
+        if len(self.calibrationPoints) > 0 and not self.calibrated:
             self.calibrationPointsItem = pg.ScatterPlotItem(
                 size=10, brush=pg.mkBrush(255, 255, 255, 120))
             self.calibrationPointsItem.addPoints([

@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
         self.spectrum.wavelength = self.calibration.calibrate(
             self.spectrum.flux.size)
 
-        print(self.spectrum.wavelength)
+        self.spectrumView.calibrated = True
         self.spectrumView.setSpectrum(self.spectrum)
 
         successDialog = SuccessDialog("Calibration success")
