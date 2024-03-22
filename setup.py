@@ -13,7 +13,7 @@ description = (f"pyspec\n"
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-exec(open('py/picca/_version.py').read())
+exec(open('pyspec/_version.py').read())
 version = __version__
 
 setup(name="pyspec",
