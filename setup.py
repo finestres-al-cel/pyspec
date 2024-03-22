@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
 import glob
-import git
 
 from setuptools import find_namespace_packages, setup
 from pathlib import Path
 
 scripts = sorted(glob.glob('bin/*py'))
 
-description = (f"pyspec\n"
-               f"commit hash: {git.Repo('.').head.object.hexsha}")
+description = (f"pyspec")
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
