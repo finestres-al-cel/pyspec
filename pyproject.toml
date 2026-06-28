@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyspec"
+description = "Tools and a GUI app to process spectra"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+  { name = "iprafols" }
+]
+dynamic = ["dependencies", "version"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pylint",
+  "yapf"
+]
+
+[project.urls]
+Homepage = "https://github.com/finestres-al-cel/pyspec"
+Repository = "https://github.com/finestres-al-cel/pyspec"
+
+[tool.setuptools]
+include-package-data = true
+script-files = [
+  "bin/pyspec_app.py",
+]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+version = { attr = "pyspec._version.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["pyspec*"]
+
+[tool.setuptools.package-data]
+pyspec = ["app/button_plots/*.png"]

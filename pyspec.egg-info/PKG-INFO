@@ -1,3 +1,27 @@
+Metadata-Version: 2.4
+Name: pyspec
+Version: 2.0.0
+Summary: Tools and a GUI app to process spectra
+Home-page: https://github.com/finestres-al-cel/pyspec
+Author: iprafols
+Author-email: iprafols@gmail.com
+License: GPL-3.0-or-later
+Project-URL: Homepage, https://github.com/finestres-al-cel/pyspec
+Project-URL: Repository, https://github.com/finestres-al-cel/pyspec
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: astropy>=2
+Requires-Dist: matplotlib>=2
+Requires-Dist: scipy>=0.19
+Requires-Dist: pyqt6
+Requires-Dist: pyqtgraph
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pylint; extra == "dev"
+Requires-Dist: yapf; extra == "dev"
+Dynamic: author-email
+Dynamic: home-page
+
 # planet_orbits
 
 ## Installation
