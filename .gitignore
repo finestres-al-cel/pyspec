@@ -9,3 +9,7 @@
 *checkpoint.ipynb
 
 *.log
+
+eggs/
+.eggs/
+pyspec.egg-info/
