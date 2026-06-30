@@ -1,5 +1,5 @@
-astropy>=2
-matplotlib>=2
-scipy>=0.19
-pyqt6
-pyqtgraph
+astropy >= 8.0.0
+matplotlib >= 3.11.0
+scipy >= 0.19
+pyqt6 >= 6.11.0
+pyqtgraph >= 0.14.0
