@@ -120,11 +120,13 @@ class Spectrum:
         SpectrumError if the file content was not correct
         """
         data = np.genfromtxt(filename, names=True)
+        print(data)
+        print(data.dtype.names)
 
         try:
             flux = data["flux"]
-            if "wavelength[Angstroms]" in data.dtype.names:
-                wavelength = data["wavelength[Angstroms]"]
+            if "wavelengthAngstroms" in data.dtype.names:
+                wavelength = data["wavelengthAngstroms"]
             else:
                 wavelength = None
         except ValueError as error:
